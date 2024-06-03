@@ -1,20 +1,40 @@
-// backend/server.js
 const express = require('express');
 const bodyParser = require('body-parser');
-const cors = require('cors');
-const app = express();
-const port = 3000;
+const serverless = require('serverless-http');
 
-app.use(cors());
+const app = express();
 app.use(bodyParser.json());
 
-app.post('/', (req, res) => {
-  const { intent, slots } = req.body;
-  // Handle the Alexa skill logic here
-  const response = `Received intent: ${intent} with slots: ${JSON.stringify(slots)}`;
-  res.send(response);
+app.post('/.netlify/functions/alexa', (req, res) => {
+  if (req.body.request.type === 'LaunchRequest') {
+    res.json({
+      response: {
+        outputSpeech: {
+          type: 'PlainText',
+          text: 'Welcome to my Alexa skill!',
+        },
+      },
+    });
+  } else if (req.body.request.type === 'IntentRequest' &&
+             req.body.request.intent.name === 'GetInfoIntent') {
+    res.json({
+      response: {
+        outputSpeech: {
+          type: 'PlainText',
+          text: 'Here is the information you requested.',
+        },
+      },
+    });
+  } else {
+    res.json({
+      response: {
+        outputSpeech: {
+          type: 'PlainText',
+          text: 'Sorry, I didn\'t understand that. Please try again.',
+        },
+      },
+    });
+  }
 });
 
-app.listen(port, () => {
-  console.log(`Backend listening at http://localhost:${port}`);
-});
+module.exports.handler = serverless(app);
